@@ -4,13 +4,26 @@
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+def generate_entities(start_index: int, count: int):
+    e = []
+    for i in range(start_index, start_index + count):
+        e += {
+            'start_index': start_index,
+            'current_index': i
+            }
+    return e
+
+
+def process(e):
+    for i, e in enumerate(e):
+        if i % 50 == 0:
+            print("processing entity with index %d" % i)
+    print("Done, processed a total of %d entities" % len(e))
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
+    entities = generate_entities(0, 1000)
+    process(entities)
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
