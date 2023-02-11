@@ -11,7 +11,7 @@ def generate_entities(start_index: int, count: int):
         e.append({
             'startIndex': start_index,
             'currentIndex': i
-            })
+        })
     return e
 
 
@@ -19,6 +19,13 @@ def to_basic_entity(i, e):
     e["PartitionKey"] = 'basic'
     e["RowKey"] = str(i)
     return e
+
+
+def to_partitioned_entity(i, e, modulo=10):
+    partition = i % modulo
+    e["PartitionKey"] = f'batch_{partition:d}'
+    e["RowKey"] = str(i)
+    return str(partition), e
 
 
 def basic_upsert(items):
@@ -51,9 +58,44 @@ def batch_upsert(items, batch_size=100):
     print("Done, processed a total of %d entities" % len(items))
 
 
+def batch_upsert_partitioned(items, batch_size=100, partition_modulo=10):
+    partitioned_operations = {}
+    for i, e in enumerate(items):
+        p, entity = to_partitioned_entity(i, e, partition_modulo)
+
+        # Create the operations list for this partition if it doesn't exist.
+        if p not in partitioned_operations:
+            partitioned_operations[p] = []
+        partition = partitioned_operations[p]
+        partition.append(('upsert', entity))
+        if i % 500 == 0:
+            print("\tProcessing entity with index %d" % i)
+
+        if len(partition) == batch_size:
+            submit_partition(partitioned_operations, p)
+    # Clean up any partitions with outstanding operations.
+    for p, partition in partitioned_operations:
+        submit_partition(partitioned_operations, p)
+    print("Done, processed a total of %d entities" % len(items))
+
+
+def submit_partition(partitioned_operations, p):
+    partition = partitioned_operations[p]
+    if len(partition) == 0:
+        return
+
+    table_client = get_table_client('batch_partitioned')
+    try:
+        table_client.submit_transaction(partition)
+        partition = []
+    except TableTransactionError as e:
+        print("Failed to submit transaction")
+        raise e
+
+
 def get_table_client(table_name: str):
     connection_string = 'UseDevelopmentStorage=true'
-    table_client = TableClient.from_connection_string(conn_str=connection_string,table_name=table_name)
+    table_client = TableClient.from_connection_string(conn_str=connection_string, table_name=table_name)
     try:
         table_client.create_table()
         print('table %s created successfully' % table_name)
@@ -79,5 +121,5 @@ def run_test(n, insert_function, *args):
 if __name__ == '__main__':
     n_entities = 10000
     # run_test(n_entities, basic_upsert)
-    run_test(n_entities, batch_upsert)
-
+    # run_test(n_entities, batch_upsert)
+    run_test(n_entities, batch_upsert_partitioned, 100, 10)
