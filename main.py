@@ -1,4 +1,5 @@
 from datetime import datetime
+from math import floor
 
 from azure.core.exceptions import ResourceExistsError
 from azure.data.tables import TableClient
@@ -58,9 +59,10 @@ def run_test(n, insert_function):
 
     insert_function(entities)
     execution_time = datetime.now() - start_time
-    eps = float(n) / execution_time.total_seconds()
-    milliseconds = execution_time.microseconds / 1000
-    print(f"Finished test for function {insert_function.__name__:s} saving {n:d} entities in {milliseconds:d}ms ({eps:f} entities per second)")
+    total_seconds = execution_time.total_seconds()
+    eps = float(n) / total_seconds
+    print(f"Finished test for function {insert_function.__name__:s} saving {n:d} entities in {total_seconds:f}s "
+          f"({eps:f} entities per second)")
 
 
 if __name__ == '__main__':
