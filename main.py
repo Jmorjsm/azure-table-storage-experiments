@@ -20,15 +20,20 @@ def to_entity(i, e):
     return e
 
 
-def basic_upsert(i, e):
-    table_client = get_table_client('basic')
-    entity = to_entity(i, e)
-    table_client.upsert_entity(entity)
-
-
-def process(items):
+def basic_upsert(items):
     for i, e in enumerate(items):
-        basic_upsert(i, e)
+        table_client = get_table_client('basic')
+        entity = to_entity(i, e)
+        table_client.upsert_entity(entity)
+
+        if i % 50 == 0:
+            print("processing entity with index %d" % i)
+    print("Done, processed a total of %d entities" % len(items))
+
+
+def batch_upsert(items):
+    for i, e in enumerate(items):
+        # TODO: Do the save
         if i % 50 == 0:
             print("processing entity with index %d" % i)
     print("Done, processed a total of %d entities" % len(items))
@@ -46,13 +51,21 @@ def get_table_client(table_name: str):
     return table_client
 
 
-if __name__ == '__main__':
-    n = 1000
+def run_test(n, insert_function):
+    print("Starting insert test for function %s with %d entities." % (insert_function.__name__, n))
     entities = generate_entities(0, n)
     start_time = datetime.now()
-    process(entities)
+
+    insert_function(entities)
     execution_time = datetime.now() - start_time
     eps = float(n) / execution_time.total_seconds()
     milliseconds = execution_time.microseconds / 1000
-    print(f"Finished saving {n:d} entities in {milliseconds:d}ms ({eps:f} entities per second)")
+    print(f"Finished test for function {insert_function.__name__:s} saving {n:d} entities in {milliseconds:d}ms ({eps:f} entities per second)")
+
+
+if __name__ == '__main__':
+    n_entities = 1000
+    run_test(n_entities, basic_upsert)
+#    run_test(n_entities, batch_upsert)
+
 
