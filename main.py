@@ -122,4 +122,4 @@ if __name__ == '__main__':
     n_entities = 10000
     # run_test(n_entities, basic_upsert)
     # run_test(n_entities, batch_upsert)
-    run_test(n_entities, batch_upsert_partitioned, 100, 10)
+    run_test(n_entities, batch_upsert_partitioned, 100, 50)
