@@ -1,0 +1,12 @@
+azure-core==1.26.3
+azure-data-tables==12.4.2
+certifi==2022.12.7
+charset-normalizer==3.0.1
+idna==3.4
+isodate==0.6.1
+multidict==6.0.4
+requests==2.28.2
+six==1.16.0
+typing_extensions==4.4.0
+urllib3==1.26.14
+yarl==1.8.2
