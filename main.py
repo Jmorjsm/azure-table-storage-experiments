@@ -2,7 +2,7 @@ from datetime import datetime
 from math import floor
 
 from azure.core.exceptions import ResourceExistsError
-from azure.data.tables import TableClient
+from azure.data.tables import TableClient, TableTransactionError
 
 
 def generate_entities(start_index: int, count: int):
@@ -15,28 +15,39 @@ def generate_entities(start_index: int, count: int):
     return e
 
 
-def to_entity(i, e):
+def to_basic_entity(i, e):
     e["PartitionKey"] = 'basic'
     e["RowKey"] = str(i)
     return e
 
 
 def basic_upsert(items):
+    table_client = get_table_client('basic')
     for i, e in enumerate(items):
-        table_client = get_table_client('basic')
-        entity = to_entity(i, e)
+        entity = to_basic_entity(i, e)
         table_client.upsert_entity(entity)
 
         if i % 50 == 0:
-            print("processing entity with index %d" % i)
+            print("\tProcessing entity with index %d" % i)
     print("Done, processed a total of %d entities" % len(items))
 
 
-def batch_upsert(items):
+def batch_upsert(items, batch_size=100):
+    operations = []
     for i, e in enumerate(items):
-        # TODO: Do the save
-        if i % 50 == 0:
-            print("processing entity with index %d" % i)
+        entity = to_basic_entity(i, e)
+        operations.append(('upsert', entity))
+        if i % 500 == 0:
+            print("\tProcessing entity with index %d" % i)
+
+        if i % batch_size == 0:
+            table_client = get_table_client('batch')
+            try:
+                table_client.submit_transaction(operations)
+                operations = []
+            except TableTransactionError as e:
+                print("Failed to submit transaction")
+                raise e
     print("Done, processed a total of %d entities" % len(items))
 
 
@@ -52,12 +63,12 @@ def get_table_client(table_name: str):
     return table_client
 
 
-def run_test(n, insert_function):
+def run_test(n, insert_function, *args):
     print("Starting insert test for function %s with %d entities." % (insert_function.__name__, n))
     entities = generate_entities(0, n)
     start_time = datetime.now()
 
-    insert_function(entities)
+    insert_function(entities, *args)
     execution_time = datetime.now() - start_time
     total_seconds = execution_time.total_seconds()
     eps = float(n) / total_seconds
@@ -66,8 +77,7 @@ def run_test(n, insert_function):
 
 
 if __name__ == '__main__':
-    n_entities = 1000
-    run_test(n_entities, basic_upsert)
-#    run_test(n_entities, batch_upsert)
-
+    n_entities = 10000
+    # run_test(n_entities, basic_upsert)
+    run_test(n_entities, batch_upsert)
 
