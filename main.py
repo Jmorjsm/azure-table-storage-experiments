@@ -34,7 +34,7 @@ def basic_upsert(items):
         entity = to_basic_entity(i, e)
         table_client.upsert_entity(entity)
 
-        if i % 50 == 0:
+        if i % 500 == 0:
             print("\tProcessing entity with index %d" % i)
     print("Done, processed a total of %d entities" % len(items))
 
@@ -72,22 +72,22 @@ def batch_upsert_partitioned(items, batch_size=100, partition_modulo=10):
             print("\tProcessing entity with index %d" % i)
 
         if len(partition) == batch_size:
-            submit_partition(partitioned_operations, p)
+            submit_partition(partitioned_operations, p, partition_modulo)
     # Clean up any partitions with outstanding operations.
-    for p, partition in partitioned_operations:
-        submit_partition(partitioned_operations, p)
+    for p in partitioned_operations:
+        submit_partition(partitioned_operations, p, partition_modulo)
     print("Done, processed a total of %d entities" % len(items))
 
 
-def submit_partition(partitioned_operations, p):
+def submit_partition(partitioned_operations, p, partition_modulo):
     partition = partitioned_operations[p]
     if len(partition) == 0:
         return
 
-    table_client = get_table_client('batch_partitioned')
+    table_client = get_table_client(f'batchPartitioned{partition_modulo:d}')
     try:
         table_client.submit_transaction(partition)
-        partition = []
+        partitioned_operations[p] = []
     except TableTransactionError as e:
         print("Failed to submit transaction")
         raise e
