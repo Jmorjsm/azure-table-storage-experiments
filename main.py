@@ -178,8 +178,12 @@ async def run_test_async(n, insert_function, *args):
           f"({eps:f} entities per second)")
 
 if __name__ == '__main__':
+    # test with 300k entities, 4 props, 40,40,300,100 chars respectively
+    #n_entities = 300000
     n_entities = 10000
+    property_shapes = (40, 40, 300, 100)
+
     # run_test(n_entities, basic_upsert)
     # run_test(n_entities, batch_upsert)
-    run_test(n_entities, batch_upsert_partitioned, 100, 50)
-    asyncio.run(run_test_async(n_entities, batch_upsert_partitioned_async, 100, 50))
+    #run_test(n_entities, batch_upsert_partitioned, 100, 1000)
+    asyncio.run(run_test_async(n_entities, batch_upsert_partitioned_async, 100, 1000))
