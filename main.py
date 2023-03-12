@@ -34,8 +34,8 @@ def basic_upsert(items):
         entity = to_basic_entity(i, e)
         table_client.upsert_entity(entity)
 
-        if i % 500 == 0:
-            print("\tProcessing entity with index %d" % i)
+        # if i % 500 == 0:
+        #     print("\tProcessing entity with index %d" % i)
     print("Done, processed a total of %d entities" % len(items))
 
 
