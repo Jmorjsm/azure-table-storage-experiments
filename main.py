@@ -7,14 +7,22 @@ from tabulate import tabulate
 from tqdm import tqdm
 
 
-def generate_entities(start_index: int, count: int):
-    e = []
+def generate_entities(start_index: int, count: int, property_shapes: tuple):
+    from random import choice
+    from string import ascii_lowercase
+
+    entities = []
     for i in range(start_index, start_index + count):
-        e.append({
+        entity = {
             'startIndex': start_index,
             'currentIndex': i
-        })
-    return e
+        }
+
+        for prop_index, prop_size in enumerate(property_shapes):
+            entity[f'p{prop_index}'] = "".join(choice(ascii_lowercase) for _ in range(prop_size))
+
+        entities.append(entity)
+    return entities
 
 
 def to_basic_entity(i, e):
@@ -173,9 +181,9 @@ async def get_table_client_async(table_name: str):
         raise
 
 
-def run_test(n, insert_function, *args):
+def run_test(n, property_shapes, insert_function, *args):
     print("Starting insert test for function %s with %d entities." % (insert_function.__name__, n))
-    entities = generate_entities(0, n)
+    entities = generate_entities(0, n, property_shapes)
     start_time = datetime.now()
 
     insert_function(entities, *args)
@@ -188,9 +196,9 @@ def run_test(n, insert_function, *args):
     return (total_seconds, eps, insert_function.__name__) + args
 
 
-async def run_test_async(n, insert_function, *args):
+async def run_test_async(n, property_shapes, insert_function, *args):
     print("Starting insert test for function %s with %d entities." % (insert_function.__name__, n))
-    entities = generate_entities(0, n)
+    entities = generate_entities(0, n, property_shapes)
     start_time = datetime.now()
 
     await insert_function(entities, *args)
@@ -209,13 +217,13 @@ if __name__ == '__main__':
     property_shapes = (40, 40, 300, 100)
 
     results = []
-    results.append(run_test(n_entities, basic_upsert))
-    results.append(run_test(n_entities, batch_upsert))
+    results.append(run_test(n_entities, property_shapes, basic_upsert))
+    results.append(run_test(n_entities, property_shapes, batch_upsert))
     partition_counts = (100, 200, 500, 1000, 2000, 2500, 5000)
     for partition_count in partition_counts:
-        results.append(run_test(n_entities, batch_upsert_partitioned, 100, partition_count))
+        results.append(run_test(n_entities, property_shapes, batch_upsert_partitioned, 100, partition_count))
 
     for partition_count in partition_counts:
-        results.append(asyncio.run(run_test_async(n_entities, batch_upsert_partitioned_async, 100, partition_count)))
+        results.append(asyncio.run(run_test_async(n_entities, property_shapes, batch_upsert_partitioned_async, 100, partition_count)))
 
     print(tabulate(results, headers=["Time elapsed(s)", "Entities/second", "Function", "Partition size", "Partition count"]))
