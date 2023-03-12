@@ -80,24 +80,36 @@ def batch_upsert_partitioned(items, batch_size=100, partition_modulo=10):
 
 
 async def batch_upsert_partitioned_async(items, batch_size=100, partition_modulo=10):
+    from azure.data.tables.aio import TableClient
+    connection_string = 'UseDevelopmentStorage=true'
+    table_name = f'batchPartitioned{partition_modulo:d}'f'batchPartitioned{partition_modulo:d}'
+    table_client = TableClient.from_connection_string(conn_str=connection_string, table_name=table_name)
+    try:
+        await table_client.create_table()
+        print('table %s created successfully' % table_name)
+    except ResourceExistsError:
+        print('table %s already exists' % table_name)
+        pass
+
     partitioned_operations = {}
-    with await get_table_client_async(f'batchPartitioned{partition_modulo:d}') as table_client:
-        for i, e in enumerate(items):
-            p, entity = to_partitioned_entity(i, e, partition_modulo)
+    for i, e in enumerate(items):
+        p, entity = to_partitioned_entity(i, e, partition_modulo)
 
-            # Create the operations list this partition if it doesn't exist.
-            if p not in partitioned_operations:
-                partitioned_operations[p] = []
-            partition = partitioned_operations[p]
-            partition.append(('upsert', entity))
-            if i % 500 == 0:
-                print("\tProcessing entity with index %d" % i)
+        # Create the operations list this partition if it doesn't exist.
+        if p not in partitioned_operations:
+            partitioned_operations[p] = []
+        partition = partitioned_operations[p]
+        partition.append(('upsert', entity))
+        if i % 500 == 0:
+            print("\tProcessing entity with index %d" % i)
 
-            if len(partition) == batch_size:
-                await submit_partition_async(partitioned_operations, p, partition_modulo, table_client)
-        # Clean up any partitions with outstanding operations.
-        for p in partitioned_operations:
+        if len(partition) == batch_size:
             await submit_partition_async(partitioned_operations, p, partition_modulo, table_client)
+    # Clean up any partitions with outstanding operations.
+    for p in partitioned_operations:
+        await submit_partition_async(partitioned_operations, p, partition_modulo, table_client)
+
+    await table_client.__aexit__()
     print("Done, processed a total of %d entities" % len(items))
 
 
@@ -146,13 +158,17 @@ async def get_table_client_async(table_name: str):
     connection_string = 'UseDevelopmentStorage=true'
     table_client = TableClient.from_connection_string(conn_str=connection_string, table_name=table_name)
     try:
-        await table_client.create_table()
+        return await table_client.create_table()
         print('table %s created successfully' % table_name)
     except ResourceExistsError:
         # print('table %s already exists' % table_name)
         pass
-    return table_client
-
+    except:
+        try:
+            table_client.close()
+        except:
+            pass
+        raise
 
 def run_test(n, insert_function, *args):
     print("Starting insert test for function %s with %d entities." % (insert_function.__name__, n))
