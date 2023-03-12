@@ -170,6 +170,7 @@ async def get_table_client_async(table_name: str):
             pass
         raise
 
+
 def run_test(n, insert_function, *args):
     print("Starting insert test for function %s with %d entities." % (insert_function.__name__, n))
     entities = generate_entities(0, n)
@@ -201,7 +202,9 @@ if __name__ == '__main__':
     n_entities = 10000
     property_shapes = (40, 40, 300, 100)
 
-    # run_test(n_entities, basic_upsert)
-    # run_test(n_entities, batch_upsert)
-    # run_test(n_entities, batch_upsert_partitioned, 100, 1000)
-    asyncio.run(run_test_async(n_entities, batch_upsert_partitioned_async, 100, 1000))
+    run_test(n_entities, basic_upsert)
+    run_test(n_entities, batch_upsert)
+    partition_counts = (100, 200, 500, 1000, 2000, 2500, 5000)
+    for partition_count in partition_counts:
+        run_test(n_entities, batch_upsert_partitioned, 100, partition_count)
+        asyncio.run(run_test_async(n_entities, batch_upsert_partitioned_async, 100, partition_count))
