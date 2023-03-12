@@ -110,8 +110,8 @@ async def batch_upsert_partitioned_async(items, batch_size=100, partition_modulo
             partitioned_operations[p] = []
         partition = partitioned_operations[p]
         partition.append(('upsert', entity))
-        if i % 500 == 0:
-            print("\tProcessing entity with index %d" % i)
+        # if i % 500 == 0:
+        #     print("\tProcessing entity with index %d" % i)
 
         if len(partition) == batch_size:
             await submit_partition_async(partitioned_operations, p, partition_modulo, table_client)
@@ -150,9 +150,14 @@ async def submit_partition_async(partitioned_operations, p, partition_modulo, ta
         raise e
 
 
+def get_connection_string():
+    from os import environ
+    return environ.get('TABLE_STORAGE_CONNECTION_STRING', 'UseDevelopmentStorage=true')
+
+
 def get_table_client(table_name: str):
     from azure.data.tables import TableClient
-    connection_string = 'UseDevelopmentStorage=true'
+    connection_string = get_connection_string()
     table_client = TableClient.from_connection_string(conn_str=connection_string, table_name=table_name)
     try:
         table_client.create_table()
@@ -165,7 +170,7 @@ def get_table_client(table_name: str):
 
 async def get_table_client_async(table_name: str):
     from azure.data.tables.aio import TableClient
-    connection_string = 'UseDevelopmentStorage=true'
+    connection_string = get_connection_string()
     table_client = TableClient.from_connection_string(conn_str=connection_string, table_name=table_name)
     try:
         return await table_client.create_table()
@@ -210,10 +215,20 @@ async def run_test_async(n, property_shapes, insert_function, *args):
 
     return (total_seconds, eps, insert_function.__name__) + args
 
+def cleanup():
+    from azure.data.tables import TableServiceClient
+    connection_string = get_connection_string()
+    table_service_client = TableServiceClient.from_connection_string(connection_string)
+
+    for table in table_service_client.list_tables():
+        print(f'deleting table {table.name}')
+        table_service_client.delete_table(table.name)
+
 if __name__ == '__main__':
+    cleanup()
     # test with 300k entities, 4 props, 40,40,300,100 chars respectively
     #n_entities = 300000
-    n_entities = 100
+    n_entities = 300
     property_shapes = (40, 40, 300, 100)
 
     results = []
