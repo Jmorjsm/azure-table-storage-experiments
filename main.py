@@ -3,6 +3,8 @@ from datetime import datetime
 
 from azure.core.exceptions import ResourceExistsError
 from azure.data.tables import TableTransactionError
+from tabulate import tabulate
+from tqdm import tqdm
 
 
 def generate_entities(start_index: int, count: int):
@@ -30,7 +32,7 @@ def to_partitioned_entity(i, e, modulo=10):
 
 def basic_upsert(items):
     table_client = get_table_client('basic')
-    for i, e in enumerate(items):
+    for i, e in enumerate(tqdm(items)):
         entity = to_basic_entity(i, e)
         table_client.upsert_entity(entity)
 
@@ -41,11 +43,11 @@ def basic_upsert(items):
 
 def batch_upsert(items, batch_size=100):
     operations = []
-    for i, e in enumerate(items):
+    for i, e in enumerate(tqdm(items)):
         entity = to_basic_entity(i, e)
         operations.append(('upsert', entity))
-        if i % 500 == 0:
-            print("\tProcessing entity with index %d" % i)
+        # if i % 500 == 0:
+        #     print("\tProcessing entity with index %d" % i)
 
         if i % batch_size == 0:
             table_client = get_table_client('batch')
@@ -60,7 +62,7 @@ def batch_upsert(items, batch_size=100):
 
 def batch_upsert_partitioned(items, batch_size=100, partition_modulo=10):
     partitioned_operations = {}
-    for i, e in enumerate(items):
+    for i, e in enumerate(tqdm(items)):
         p, entity = to_partitioned_entity(i, e, partition_modulo)
 
         # Create the operations list for this partition if it doesn't exist.
@@ -68,8 +70,8 @@ def batch_upsert_partitioned(items, batch_size=100, partition_modulo=10):
             partitioned_operations[p] = []
         partition = partitioned_operations[p]
         partition.append(('upsert', entity))
-        if i % 500 == 0:
-            print("\tProcessing entity with index %d" % i)
+        # if i % 500 == 0:
+        #     print("\tProcessing entity with index %d" % i)
 
         if len(partition) == batch_size:
             submit_partition(partitioned_operations, p, partition_modulo)
@@ -92,7 +94,7 @@ async def batch_upsert_partitioned_async(items, batch_size=100, partition_modulo
         pass
 
     partitioned_operations = {}
-    for i, e in enumerate(items):
+    for i, e in enumerate(tqdm(items)):
         p, entity = to_partitioned_entity(i, e, partition_modulo)
 
         # Create the operations list this partition if it doesn't exist.
@@ -183,6 +185,8 @@ def run_test(n, insert_function, *args):
     print(f"Finished test for function {insert_function.__name__:s} saving {n:d} entities in {total_seconds:f}s "
           f"({eps:f} entities per second)")
 
+    return (total_seconds, eps, insert_function.__name__) + args
+
 
 async def run_test_async(n, insert_function, *args):
     print("Starting insert test for function %s with %d entities." % (insert_function.__name__, n))
@@ -196,15 +200,22 @@ async def run_test_async(n, insert_function, *args):
     print(f"Finished test for function {insert_function.__name__:s} saving {n:d} entities in {total_seconds:f}s "
           f"({eps:f} entities per second)")
 
+    return (total_seconds, eps, insert_function.__name__) + args
+
 if __name__ == '__main__':
     # test with 300k entities, 4 props, 40,40,300,100 chars respectively
     #n_entities = 300000
-    n_entities = 10000
+    n_entities = 100
     property_shapes = (40, 40, 300, 100)
 
-    run_test(n_entities, basic_upsert)
-    run_test(n_entities, batch_upsert)
+    results = []
+    results.append(run_test(n_entities, basic_upsert))
+    results.append(run_test(n_entities, batch_upsert))
     partition_counts = (100, 200, 500, 1000, 2000, 2500, 5000)
     for partition_count in partition_counts:
-        run_test(n_entities, batch_upsert_partitioned, 100, partition_count)
-        asyncio.run(run_test_async(n_entities, batch_upsert_partitioned_async, 100, partition_count))
+        results.append(run_test(n_entities, batch_upsert_partitioned, 100, partition_count))
+
+    for partition_count in partition_counts:
+        results.append(asyncio.run(run_test_async(n_entities, batch_upsert_partitioned_async, 100, partition_count)))
+
+    print(tabulate(results, headers=["Time elapsed(s)", "Entities/second", "Function", "Partition size", "Partition count"]))
