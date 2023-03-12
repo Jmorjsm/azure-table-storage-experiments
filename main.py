@@ -1,4 +1,5 @@
 import asyncio
+import os
 from datetime import datetime
 
 from azure.core.exceptions import ResourceExistsError
@@ -173,14 +174,14 @@ async def get_table_client_async(table_name: str):
     connection_string = get_connection_string()
     table_client = TableClient.from_connection_string(conn_str=connection_string, table_name=table_name)
     try:
+        # print('table %s created successfully' % table_name)
         return await table_client.create_table()
-        print('table %s created successfully' % table_name)
     except ResourceExistsError:
         # print('table %s already exists' % table_name)
         pass
     except:
         try:
-            table_client.close()
+            await table_client.close()
         except:
             pass
         raise
@@ -214,8 +215,12 @@ async def run_test_async(n, property_shapes, insert_function, *args):
           f"({eps:f} entities per second)")
 
     return (total_seconds, eps, insert_function.__name__) + args
+
+
 def async_test(function,args):
-    asyncio.run(function(*args))
+    return asyncio.run(function(*args))
+
+
 def cleanup():
     from azure.data.tables import TableServiceClient
     connection_string = get_connection_string()
@@ -225,15 +230,37 @@ def cleanup():
         print(f'deleting table {table.name}')
         table_service_client.delete_table(table.name)
 
+
+def result_to_entity(result_row, headers):
+    e = {
+        'PartitionKey': "results",
+        'RowKey': "".join(str(r) for r in result_row)
+    }
+    for i, header in enumerate(headers):
+        if(len(result_row) > i):
+            e[header] = result_row[i]
+
+    return e
+
+def save_results(results, headers):
+    table_client = get_table_client(f'results')
+    operations = [('upsert',result_to_entity(result, headers)) for result in results]
+
+    try:
+        table_client.submit_transaction(operations)
+    except TableTransactionError as e:
+        print("Failed to submit transaction")
+        raise e
+
+
 if __name__ == '__main__':
     cleanup()
     # test with 300k entities, 4 props, 40,40,300,100 chars respectively
-    n_entities = 20000
-    #n_entities = 100
+    n_entities = os.environ.get("N_ENTITIES", 10)
+    #n_entities = 300000
     property_shapes = (40, 40, 300, 100)
 
     tests = []
-
     results = []
     #tests.append((run_test,(n_entities, property_shapes, basic_upsert)))
     tests.append((run_test,(n_entities, property_shapes, batch_upsert)))
@@ -247,4 +274,6 @@ if __name__ == '__main__':
     for test in tests:
         results.append(test[0](*test[1]))
 
-    print(tabulate(results, headers=["Time elapsed(s)", "Entities/second", "Function", "Partition size", "Partition count"]))
+    headers = ["elapsed", "eps", "function", "partitionSize", "partitionCount"]
+    print(tabulate(results, headers=headers))
+    save_results(results,headers)

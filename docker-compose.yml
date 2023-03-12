@@ -6,3 +6,8 @@ services:
       - '10000:10000'
       - '10001:10001'
       - '10002:10002'
+  tablestorage_test:
+    build:
+      dockerfile: ./Dockerfile
+    environment:
+      - TABLE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite-1:10000/devstoreaccount1;QueueEndpoint=http://azurite-1:10001/devstoreaccount1;TableEndpoint=http://azurite-1:10002/devstoreaccount1;"
