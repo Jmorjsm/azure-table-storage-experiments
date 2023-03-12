@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime
 
 from azure.core.exceptions import ResourceExistsError
-from azure.data.tables import TableClient, TableTransactionError
+from azure.data.tables import TableTransactionError
 
 
 def generate_entities(start_index: int, count: int):
@@ -81,22 +81,23 @@ def batch_upsert_partitioned(items, batch_size=100, partition_modulo=10):
 
 async def batch_upsert_partitioned_async(items, batch_size=100, partition_modulo=10):
     partitioned_operations = {}
-    for i, e in enumerate(items):
-        p, entity = to_partitioned_entity(i, e, partition_modulo)
+    with await get_table_client_async(f'batchPartitioned{partition_modulo:d}') as table_client:
+        for i, e in enumerate(items):
+            p, entity = to_partitioned_entity(i, e, partition_modulo)
 
-        # Create the operations list this partition if it doesn't exist.
-        if p not in partitioned_operations:
-            partitioned_operations[p] = []
-        partition = partitioned_operations[p]
-        partition.append(('upsert', entity))
-        if i % 500 == 0:
-            print("\tProcessing entity with index %d" % i)
+            # Create the operations list this partition if it doesn't exist.
+            if p not in partitioned_operations:
+                partitioned_operations[p] = []
+            partition = partitioned_operations[p]
+            partition.append(('upsert', entity))
+            if i % 500 == 0:
+                print("\tProcessing entity with index %d" % i)
 
-        if len(partition) == batch_size:
-            await submit_partition_async(partitioned_operations, p, partition_modulo)
-    # Clean up any partitions with outstanding operations.
-    for p in partitioned_operations:
-        await submit_partition_async(partitioned_operations, p, partition_modulo)
+            if len(partition) == batch_size:
+                await submit_partition_async(partitioned_operations, p, partition_modulo, table_client)
+        # Clean up any partitions with outstanding operations.
+        for p in partitioned_operations:
+            await submit_partition_async(partitioned_operations, p, partition_modulo, table_client)
     print("Done, processed a total of %d entities" % len(items))
 
 
@@ -114,12 +115,11 @@ def submit_partition(partitioned_operations, p, partition_modulo):
         raise e
 
 
-async def submit_partition_async(partitioned_operations, p, partition_modulo):
+async def submit_partition_async(partitioned_operations, p, partition_modulo, table_client):
     partition = partitioned_operations[p]
     if len(partition) == 0:
         return
 
-    table_client = await get_table_client_async(f'batchPartitioned{partition_modulo:d}')
     try:
         await table_client.submit_transaction(partition)
         partitioned_operations[p] = []
@@ -129,6 +129,7 @@ async def submit_partition_async(partitioned_operations, p, partition_modulo):
 
 
 def get_table_client(table_name: str):
+    from azure.data.tables import TableClient
     connection_string = 'UseDevelopmentStorage=true'
     table_client = TableClient.from_connection_string(conn_str=connection_string, table_name=table_name)
     try:
@@ -141,10 +142,11 @@ def get_table_client(table_name: str):
 
 
 async def get_table_client_async(table_name: str):
+    from azure.data.tables.aio import TableClient
     connection_string = 'UseDevelopmentStorage=true'
     table_client = TableClient.from_connection_string(conn_str=connection_string, table_name=table_name)
     try:
-        table_client.create_table()
+        await table_client.create_table()
         print('table %s created successfully' % table_name)
     except ResourceExistsError:
         # print('table %s already exists' % table_name)
@@ -185,5 +187,5 @@ if __name__ == '__main__':
 
     # run_test(n_entities, basic_upsert)
     # run_test(n_entities, batch_upsert)
-    #run_test(n_entities, batch_upsert_partitioned, 100, 1000)
+    # run_test(n_entities, batch_upsert_partitioned, 100, 1000)
     asyncio.run(run_test_async(n_entities, batch_upsert_partitioned_async, 100, 1000))
