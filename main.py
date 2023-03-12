@@ -214,7 +214,8 @@ async def run_test_async(n, property_shapes, insert_function, *args):
           f"({eps:f} entities per second)")
 
     return (total_seconds, eps, insert_function.__name__) + args
-
+def async_test(function,args):
+    asyncio.run(function(*args))
 def cleanup():
     from azure.data.tables import TableServiceClient
     connection_string = get_connection_string()
@@ -227,18 +228,23 @@ def cleanup():
 if __name__ == '__main__':
     cleanup()
     # test with 300k entities, 4 props, 40,40,300,100 chars respectively
-    #n_entities = 300000
-    n_entities = 300
+    n_entities = 20000
+    #n_entities = 100
     property_shapes = (40, 40, 300, 100)
 
+    tests = []
+
     results = []
-    results.append(run_test(n_entities, property_shapes, basic_upsert))
-    results.append(run_test(n_entities, property_shapes, batch_upsert))
+    #tests.append((run_test,(n_entities, property_shapes, basic_upsert)))
+    tests.append((run_test,(n_entities, property_shapes, batch_upsert)))
     partition_counts = (100, 200, 500, 1000, 2000, 2500, 5000)
     for partition_count in partition_counts:
-        results.append(run_test(n_entities, property_shapes, batch_upsert_partitioned, 100, partition_count))
+        tests.append((run_test, (n_entities, property_shapes, batch_upsert_partitioned, 100, partition_count)))
 
     for partition_count in partition_counts:
-        results.append(asyncio.run(run_test_async(n_entities, property_shapes, batch_upsert_partitioned_async, 100, partition_count)))
+        tests.append((async_test, (run_test_async, (n_entities, property_shapes, batch_upsert_partitioned_async, 100, partition_count))))
+
+    for test in tests:
+        results.append(test[0](*test[1]))
 
     print(tabulate(results, headers=["Time elapsed(s)", "Entities/second", "Function", "Partition size", "Partition count"]))
