@@ -92,7 +92,7 @@ def batch_upsert_partitioned(items, batch_size=100, partition_modulo=10):
 
 async def batch_upsert_partitioned_async(items, batch_size=100, partition_modulo=10):
     from azure.data.tables.aio import TableClient
-    connection_string = 'UseDevelopmentStorage=true'
+    connection_string = get_connection_string()
     table_name = f'batchPartitioned{partition_modulo:d}'f'batchPartitioned{partition_modulo:d}'
     table_client = TableClient.from_connection_string(conn_str=connection_string, table_name=table_name)
     try:
@@ -256,7 +256,7 @@ def save_results(results, headers):
 if __name__ == '__main__':
     cleanup()
     # test with 300k entities, 4 props, 40,40,300,100 chars respectively
-    n_entities = os.environ.get("N_ENTITIES", 10)
+    n_entities = os.environ.get("N_ENTITIES", 1000)
     #n_entities = 300000
     property_shapes = (40, 40, 300, 100)
 
