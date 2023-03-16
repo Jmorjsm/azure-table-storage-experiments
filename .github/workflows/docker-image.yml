@@ -15,4 +15,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag azure-table-storage-experiments:$(date +%s)
+      run: docker build . --file Dockerfile --tag azure-table-storage-experiments:${{github.run_number}}
+    - name: Push to docker hub
+      run: docker push azure-table-storage-experiments:${{github.run_number}}
