@@ -27,5 +27,6 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         push: true
-        tags: jmorjsm/azure-table-storage-experiments:${{github.run_number}}
+        tags: |
+          jmorjsm/azure-table-storage-experiments:${{github.run_number}}
           jmorjsm/azure-table-storage-experiments:latest
