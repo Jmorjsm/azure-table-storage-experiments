@@ -11,6 +11,14 @@ provider "azurerm" {
   features {}
 }
 
+variable "GHCR_USERNAME" {
+  type = string
+}
+
+variable "GHCR_PASSWORD" {
+  type = string
+}
+
 resource "azurerm_resource_group" "table_storage_experiments" {
   name     = "table-storage-experiments"
   location = "West US 2"
@@ -46,6 +54,11 @@ resource "azurerm_container_group" "table_storage_experiments" {
       port     = 443
       protocol = "TCP"
     }
+  }
+  image_registry_credential {
+    server = "ghcr.io"
+    username = var.GHCR_USERNAME
+    password = var.GHCR_PASSWORD
   }
 
   tags = {
