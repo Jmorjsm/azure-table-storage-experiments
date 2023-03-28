@@ -65,8 +65,8 @@ jobs:
     # Generates an execution plan for Terraform
     - name: Terraform Plan
       env:
-        - GHCR_USERNAME: ${{ github.actor }}
-        - GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        GHCR_USERNAME: ${{ github.actor }}
+        GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
       run: terraform plan -input=false
 
       # On push to "main", build or change infrastructure according to Terraform configuration files
