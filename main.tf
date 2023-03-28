@@ -39,7 +39,7 @@ resource "azurerm_container_group" "table_storage_experiments" {
 
   container {
     name   = "storage-experiment"
-    image  = "jmorjsm/azure-table-storage-experiments"
+    image  = "ghcr.io/jmorjsm/azure-table-storage-experiments"
     cpu    = "0.5"
     memory = "1.5"
     ports {
