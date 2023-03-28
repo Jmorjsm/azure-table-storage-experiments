@@ -24,7 +24,7 @@ resource "azurerm_storage_account" "table_storage_experiments" {
   account_replication_type = "GRS"
 
   tags = {
-    environment = "staging"
+    environment = "testing"
   }
 }
 
@@ -39,17 +39,13 @@ resource "azurerm_container_group" "table_storage_experiments" {
 
   container {
     name   = "storage-experiment"
-    image  = "docker.io/jmorjsm/azure-table-storage-experiments:latest"
+    image  = "jmorjsm/azure-table-storage-experiments"
     cpu    = "0.5"
     memory = "1.5"
     ports {
       port     = 443
       protocol = "TCP"
     }
-  }
-
-  image_registry_credential {
-    server   = "docker.io"
   }
 
   tags = {
