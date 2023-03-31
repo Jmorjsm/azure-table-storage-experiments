@@ -56,7 +56,7 @@ resource "azurerm_container_group" "table_storage_experiments" {
     }
   }
   image_registry_credential {
-    server = "ghcr.io"
+    server   = "ghcr.io"
     username = var.GHCR_USERNAME
     password = var.GHCR_PASSWORD
   }
