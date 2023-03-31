@@ -47,7 +47,7 @@ resource "azurerm_container_group" "table_storage_experiments" {
 
   container {
     name   = "storage-experiment"
-    image  = "ghcr.io/jmorjsm/azure-table-storage-experiments"
+    image  = "jmorjsm/azure-table-storage-experiments:latest"
     cpu    = "0.5"
     memory = "1.5"
     ports {
@@ -55,6 +55,7 @@ resource "azurerm_container_group" "table_storage_experiments" {
       protocol = "TCP"
     }
   }
+
   image_registry_credential {
     server   = "ghcr.io"
     username = var.GHCR_USERNAME
