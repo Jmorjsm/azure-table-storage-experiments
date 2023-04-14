@@ -5,6 +5,12 @@ terraform {
       version = "3.47.0"
     }
   }
+   backend "azurerm" {
+      resource_group_name  = "table-storage-experiments"
+      storage_account_name = "jmorjsmtse"
+      container_name       = "tfstate"
+      key                  = "terraform.tfstate"
+  }
 }
 
 provider "azurerm" {
