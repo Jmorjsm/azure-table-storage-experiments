@@ -46,7 +46,7 @@ resource "azurerm_container_group" "table_storage_experiments" {
   name                = "storage-experiment-continst"
   location            = azurerm_resource_group.table_storage_experiments.location
   resource_group_name = azurerm_resource_group.table_storage_experiments.name
-  ip_address_type     = "private"
+  ip_address_type     = "Private"
   dns_name_label      = "tserunner"
   os_type             = "Linux"
   restart_policy      = "Never"
