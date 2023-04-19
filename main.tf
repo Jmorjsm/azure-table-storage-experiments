@@ -56,15 +56,10 @@ resource "azurerm_container_group" "table_storage_experiments" {
     image  = "jmorjsm/azure-table-storage-experiments:latest"
     cpu    = "0.5"
     memory = "1.5"
-    ports [
-      {
-        port     = 443
-        protocol = "TCP"
-      },{
-        port     = 9998
-        protocol = "UDP"
-      }
-    ]
+    ports {
+      port     = 9998
+      protocol = "UDP"
+    }
   }
 
   image_registry_credential {
