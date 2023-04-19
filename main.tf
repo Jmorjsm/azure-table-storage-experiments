@@ -46,7 +46,7 @@ resource "azurerm_container_group" "table_storage_experiments" {
   name                = "storage-experiment-continst"
   location            = azurerm_resource_group.table_storage_experiments.location
   resource_group_name = azurerm_resource_group.table_storage_experiments.name
-  ip_address_type     = "Public"
+  ip_address_type     = "private"
   dns_name_label      = "tserunner"
   os_type             = "Linux"
   restart_policy      = "Never"
@@ -56,10 +56,15 @@ resource "azurerm_container_group" "table_storage_experiments" {
     image  = "jmorjsm/azure-table-storage-experiments:latest"
     cpu    = "0.5"
     memory = "1.5"
-    ports {
-      port     = 443
-      protocol = "TCP"
-    }
+    ports [
+      {
+        port     = 443
+        protocol = "TCP"
+      },{
+        port     = 9998
+        protocol = "UDP"
+      }
+    ]
   }
 
   image_registry_credential {
