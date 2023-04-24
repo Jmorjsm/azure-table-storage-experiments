@@ -60,6 +60,9 @@ resource "azurerm_container_group" "table_storage_experiments" {
       port     = 9998
       protocol = "UDP"
     }
+    environment_variables = {
+      "TABLE_STORAGE_CONNECTION_STRING" = azurerm_storage_account.table_storage_experiments.primary_connection_string
+    }
   }
 
   image_registry_credential {
