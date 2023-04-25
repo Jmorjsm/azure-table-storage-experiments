@@ -1,6 +1,6 @@
 import asyncio
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from time import sleep
 
 from azure.core.exceptions import ResourceExistsError
@@ -236,9 +236,9 @@ def cleanup():
     sleep(5)
 
 
-def result_to_entity(result_row, headers):
+def result_to_entity(partition_name, result_row, headers):
     e = {
-        'PartitionKey': "results",
+        'PartitionKey': partition_name,
         'RowKey': "".join(str(r) for r in result_row)
     }
     for i, header in enumerate(headers):
@@ -247,9 +247,9 @@ def result_to_entity(result_row, headers):
 
     return e
 
-def save_results(results, headers):
+def save_results(partition_name, results, headers):
     table_client = get_table_client(f'results')
-    operations = [('upsert',result_to_entity(result, headers)) for result in results]
+    operations = [('upsert',result_to_entity(partition_name, result, headers)) for result in results]
 
     try:
         table_client.submit_transaction(operations)
@@ -264,7 +264,8 @@ if __name__ == '__main__':
     n_entities = os.environ.get("N_ENTITIES", 1000)
     #n_entities = 300000
     property_shapes = (40, 40, 300, 100)
-
+    partition_name = datetime.now(timezone.utc).isoformat()
+    print(f'results will be saved with partition key {partition_name}')
     tests = []
     results = []
     #tests.append((run_test,(n_entities, property_shapes, basic_upsert)))
@@ -281,4 +282,4 @@ if __name__ == '__main__':
 
     headers = ["elapsed", "eps", "function", "partitionSize", "partitionCount"]
     print(tabulate(results, headers=headers))
-    save_results(results,headers)
+    save_results(partition_name, results,headers)
