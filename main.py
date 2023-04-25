@@ -1,6 +1,7 @@
 import asyncio
 import os
 from datetime import datetime
+from time import sleep
 
 from azure.core.exceptions import ResourceExistsError
 from azure.data.tables import TableTransactionError
@@ -229,6 +230,8 @@ def cleanup():
     for table in table_service_client.list_tables():
         print(f'deleting table {table.name}')
         table_service_client.delete_table(table.name)
+    print("sleeping 5 seconds...")
+    sleep(5)
 
 
 def result_to_entity(result_row, headers):
