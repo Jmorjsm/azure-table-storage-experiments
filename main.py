@@ -228,6 +228,8 @@ def cleanup():
     table_service_client = TableServiceClient.from_connection_string(connection_string)
 
     for table in table_service_client.list_tables():
+        if table.name == 'results':
+            continue
         print(f'deleting table {table.name}')
         table_service_client.delete_table(table.name)
     print("sleeping 5 seconds...")
