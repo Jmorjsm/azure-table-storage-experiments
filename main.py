@@ -125,13 +125,13 @@ async def batch_upsert_partitioned_async(items, batch_size=100, partition_modulo
     print("Done, processed a total of %d entities" % len(items))
 
 
-async def batch_upsert_partitioned_async_parallel(items, batch_size=100, partition_modulo=10):
-    from azure.data.tables.aio import TableClient
+def batch_upsert_partitioned_parallel(items, batch_size=100, partition_modulo=10):
+    from azure.data.tables import TableClient
     connection_string = get_connection_string()
     table_name = f'batchPartitionedParallel{partition_modulo:d}'
     table_client = TableClient.from_connection_string(conn_str=connection_string, table_name=table_name)
     try:
-        await table_client.create_table()
+        table_client.create_table()
         print('table %s created successfully' % table_name)
     except ResourceExistsError:
         print('table %s already exists' % table_name)
@@ -142,6 +142,9 @@ async def batch_upsert_partitioned_async_parallel(items, batch_size=100, partiti
     for i, e in enumerate(tqdm(items)):
         p, entity = to_partitioned_entity(i, e, partition_modulo)
 
+        # Create the operations list this partition if it doesn't exist.
+        if p not in partitioned_operations:
+            partitioned_operations[p] = []
         partition = partitioned_operations[p]
         partition.append(('upsert', entity))
         # if i % 500 == 0:
@@ -150,7 +153,8 @@ async def batch_upsert_partitioned_async_parallel(items, batch_size=100, partiti
     pool = ThreadPool(partition_modulo)
     for p, partition in enumerate(partitioned_operations):
         pool.apply_async(process_partition, (partition, partition_modulo, batch_size, table_client))
-    await table_client.__aexit__()
+
+    table_client.close()
 
 def process_partition(whole_partition, partition_modulo, batch_size, table_client):
     partition = []
@@ -276,7 +280,7 @@ def cleanup():
         print(f'deleting table {table.name}')
         table_service_client.delete_table(table.name)
     print("sleeping 5 seconds...")
-    #sleep(5)
+    sleep(5)
 
 
 def result_to_entity(partition_name, result_row, headers):
@@ -312,17 +316,16 @@ if __name__ == '__main__':
     tests = []
     results = []
     #tests.append((run_test,(n_entities, property_shapes, basic_upsert)))
-    # tests.append((run_test,(n_entities, property_shapes, batch_upsert)))
+    tests.append((run_test,(n_entities, property_shapes, batch_upsert)))
     partition_counts = (100, 200, 500, 1000, 2000, 2500, 5000)
-    # for partition_count in partition_counts:
-    #     tests.append((run_test, (n_entities, property_shapes, batch_upsert_partitioned, 100, partition_count)))
-    #
-    # for partition_count in partition_counts:
-    #     tests.append((async_test, (run_test_async, (n_entities, property_shapes, batch_upsert_partitioned_async, 100, partition_count))))
-    #
+    for partition_count in partition_counts:
+        tests.append((run_test, (n_entities, property_shapes, batch_upsert_partitioned, 100, partition_count)))
 
     for partition_count in partition_counts:
-        tests.append((async_test, (run_test_async, (n_entities, property_shapes, batch_upsert_partitioned_async_parallel, 100, partition_count))))
+        tests.append((async_test, (run_test_async, (n_entities, property_shapes, batch_upsert_partitioned_async, 100, partition_count))))
+
+    for partition_count in partition_counts:
+        tests.append((run_test, (n_entities, property_shapes, batch_upsert_partitioned_parallel, 100, partition_count)))
 
     for test in tests:
         results.append(test[0](*test[1]))
