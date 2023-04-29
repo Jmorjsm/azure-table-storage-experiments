@@ -14,7 +14,7 @@ def results(req: func.HttpRequest) -> func.HttpResponse:
     table_name = "results"
     results_array = []
     with TableClient.from_connection_string(connection_string, table_name) as table_client:
-        queried_entities = table_client.query_entities()
+        queried_entities = table_client.list_entities()
         for entity in queried_entities:
             results_array.append(entity)
 
