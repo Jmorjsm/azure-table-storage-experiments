@@ -275,8 +275,8 @@ def cleanup():
     table_service_client = TableServiceClient.from_connection_string(connection_string)
 
     for table in table_service_client.list_tables():
-        if table.name == 'results':
-            continue
+        #if table.name == 'results':
+        #    continue
         print(f'deleting table {table.name}')
         table_service_client.delete_table(table.name)
     print("sleeping 5 seconds...")
@@ -286,11 +286,12 @@ def cleanup():
 def result_to_entity(partition_name, result_row, headers):
     e = {
         'PartitionKey': partition_name,
-        'RowKey': "".join(str(r) for r in result_row)
     }
     for i, header in enumerate(headers):
         if(len(result_row) > i):
             e[header] = result_row[i]
+
+    e['RowKey'] = f'{e["function"]}_{e["partitionSize"]}_{e["partitionCount"]}'
 
     return e
 
@@ -316,13 +317,13 @@ if __name__ == '__main__':
     tests = []
     results = []
     #tests.append((run_test,(n_entities, property_shapes, basic_upsert)))
-    tests.append((run_test,(n_entities, property_shapes, batch_upsert)))
+    # tests.append((run_test,(n_entities, property_shapes, batch_upsert)))
     partition_counts = (100, 200, 500, 1000, 2000, 2500, 5000)
-    for partition_count in partition_counts:
-        tests.append((run_test, (n_entities, property_shapes, batch_upsert_partitioned, 100, partition_count)))
-
-    for partition_count in partition_counts:
-        tests.append((async_test, (run_test_async, (n_entities, property_shapes, batch_upsert_partitioned_async, 100, partition_count))))
+    # for partition_count in partition_counts:
+    #     tests.append((run_test, (n_entities, property_shapes, batch_upsert_partitioned, 100, partition_count)))
+    #
+    # for partition_count in partition_counts:
+    #     tests.append((async_test, (run_test_async, (n_entities, property_shapes, batch_upsert_partitioned_async, 100, partition_count))))
 
     for partition_count in partition_counts:
         tests.append((run_test, (n_entities, property_shapes, batch_upsert_partitioned_parallel, 100, partition_count)))
