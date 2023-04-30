@@ -25,6 +25,10 @@ variable "GHCR_PASSWORD" {
   type = string
 }
 
+variable "RESULTS_API_ZIP_DEPLOY_FILE" {
+  type = string
+}
+
 resource "azurerm_resource_group" "table_storage_experiments" {
   name     = "table-storage-experiments"
   location = "West US 2"
@@ -73,5 +77,32 @@ resource "azurerm_container_group" "table_storage_experiments" {
 
   tags = {
     environment = "testing"
+  }
+}
+
+resource "azurerm_service_plan" "results-service-plan" {
+  name                = "results-service-plan"
+  resource_group_name = azurerm_resource_group.table_storage_experiments.name
+  location            = azurerm_resource_group.table_storage_experiments.location
+  os_type             = "Linux"
+  sku_name            = "Y1"
+}
+
+resource "azurerm_linux_function_app" "results-api-function-app" {
+  name                = "results-api-function-app"
+  resource_group_name = azurerm_resource_group.table_storage_experiments.name
+  location            = azurerm_resource_group.table_storage_experiments.location
+
+  storage_account_name       = azurerm_storage_account.table_storage_experiments.name
+  storage_account_access_key = azurerm_storage_account.table_storage_experiments.primary_access_key
+  service_plan_id            = azurerm_service_plan.results-service-plan.id
+
+  app_settings = {
+    WEBSITE_RUN_FROM_PACKAGE = 1
+    STORAGE_CONNECTION = azurerm_storage_account.table_storage_experiments.primary_connection_string
+  }
+  
+  zip_deploy_file = var.RESULTS_API_ZIP_DEPLOY_FILE
+  site_config {
   }
 }

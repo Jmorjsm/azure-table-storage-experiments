@@ -48,6 +48,9 @@ jobs:
           ghcr.io/jmorjsm/azure-table-storage-experiments:${{github.run_number}}
           ghcr.io/jmorjsm/azure-table-storage-experiments:latest
 
+    - name: Zip Results API for Function
+      run: zip results-api.zip ./api/*
+
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1
@@ -70,7 +73,7 @@ jobs:
         ARM_ACCESS_KEY: ${{ secrets.ARM_ACCESS_KEY }}
         GHCR_USERNAME: ${{ github.actor }}
         GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-      run: terraform plan -input=false -var="GHCR_USERNAME=${{ github.actor }}" -var="GHCR_PASSWORD=${{ secrets.GITHUB_TOKEN }}"
+      run: terraform plan -input=false -var="GHCR_USERNAME=${{ github.actor }}" -var="GHCR_PASSWORD=${{ secrets.GITHUB_TOKEN }}" -var="RESULTS_API_ZIP_DEPLOY_FILE=results-api.zip"
 
       # On push to "main", build or change infrastructure according to Terraform configuration files
       # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
@@ -80,5 +83,5 @@ jobs:
         GHCR_USERNAME: ${{ github.actor }}
         GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
       if: github.ref == 'refs/heads/main'
-      run: terraform apply -auto-approve -input=false -var="GHCR_USERNAME=${{ github.actor }}" -var="GHCR_PASSWORD=${{ secrets.GITHUB_TOKEN }}"
+      run: terraform apply -auto-approve -input=false -var="GHCR_USERNAME=${{ github.actor }}" -var="GHCR_PASSWORD=${{ secrets.GITHUB_TOKEN }}" -var="RESULTS_API_ZIP_DEPLOY_FILE=results-api.zip"
 
