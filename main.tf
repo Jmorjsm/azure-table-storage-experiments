@@ -101,8 +101,8 @@ resource "azurerm_linux_function_app" "results-api-function-app" {
     WEBSITE_RUN_FROM_PACKAGE = 1
     STORAGE_CONNECTION = azurerm_storage_account.table_storage_experiments.primary_connection_string
   }
-  
-  zip_deploy_file = var.RESULTS_API_ZIP_DEPLOY_FILE
+
   site_config {
+    zip_deploy_file = var.RESULTS_API_ZIP_DEPLOY_FILE
   }
 }
