@@ -97,12 +97,13 @@ resource "azurerm_linux_function_app" "results-api-function-app" {
   storage_account_access_key = azurerm_storage_account.table_storage_experiments.primary_access_key
   service_plan_id            = azurerm_service_plan.results-service-plan.id
 
-  app_settings = {
-    WEBSITE_RUN_FROM_PACKAGE = 1
-    STORAGE_CONNECTION = azurerm_storage_account.table_storage_experiments.primary_connection_string
-  }
+  zip_deploy_file = var.RESULTS_API_ZIP_DEPLOY_FILE
+
+  app_settings = merge({
+    WEBSITE_RUN_FROM_PACKAGE:  1
+    STORAGE_CONNECTION: azurerm_storage_account.table_storage_experiments.primary_connection_string
+  })
 
   site_config {
-    zip_deploy_file = var.RESULTS_API_ZIP_DEPLOY_FILE
   }
 }
