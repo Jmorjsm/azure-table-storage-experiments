@@ -86,6 +86,7 @@ resource "azurerm_service_plan" "results-service-plan" {
   location            = azurerm_resource_group.table_storage_experiments.location
   os_type             = "Linux"
   sku_name            = "B1"
+  maximum_elastic_worker_count = 1
 }
 
 resource "azurerm_linux_function_app" "results-api-function-app" {
@@ -100,7 +101,7 @@ resource "azurerm_linux_function_app" "results-api-function-app" {
   zip_deploy_file = var.RESULTS_API_ZIP_DEPLOY_FILE
 
   app_settings = merge({
-    WEBSITE_RUN_FROM_PACKAGE:  1
+    WEBSITE_RUN_FROM_PACKAGE:  1,
     STORAGE_CONNECTION: azurerm_storage_account.table_storage_experiments.primary_connection_string
   })
 
