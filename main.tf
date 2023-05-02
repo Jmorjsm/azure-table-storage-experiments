@@ -95,7 +95,7 @@ resource "azurerm_linux_function_app" "results_api_function_app" {
 
   storage_account_name       = azurerm_storage_account.table_storage_experiments.name
   storage_account_access_key = azurerm_storage_account.table_storage_experiments.primary_access_key
-  service_plan_id            = azurerm_service_plan.results-service-plan.id
+  service_plan_id            = azurerm_service_plan.results_service_plan.id
 
   zip_deploy_file = var.RESULTS_API_ZIP_DEPLOY_FILE
 
