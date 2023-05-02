@@ -83,10 +83,9 @@ resource "azurerm_container_group" "table_storage_experiments" {
 resource "azurerm_service_plan" "results-service-plan" {
   name                = "results-service-plan"
   resource_group_name = azurerm_resource_group.table_storage_experiments.name
-  location            = azurerm_resource_group.table_storage_experiments.location
+  location            = "West US"
   os_type             = "Linux"
-  sku_name            = "B1"
-  maximum_elastic_worker_count = 1
+  sku_name            = "F1"
 }
 
 resource "azurerm_linux_function_app" "results-api-function-app" {
