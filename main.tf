@@ -80,7 +80,7 @@ resource "azurerm_container_group" "table_storage_experiments" {
   }
 }
 
-resource "azurerm_service_plan" "results-service-plan" {
+resource "azurerm_service_plan" "results_service_plan" {
   name                = "results-service-plan"
   resource_group_name = azurerm_resource_group.table_storage_experiments.name
   location            = "West US"
@@ -88,10 +88,10 @@ resource "azurerm_service_plan" "results-service-plan" {
   sku_name            = "F1"
 }
 
-resource "azurerm_linux_function_app" "results-api-function-app" {
+resource "azurerm_linux_function_app" "results_api_function_app" {
   name                = "results-api-function-app"
   resource_group_name = azurerm_resource_group.table_storage_experiments.name
-  location            = azurerm_resource_group.table_storage_experiments.location
+  location            = azurerm_service_plan.results_service_plan.location
 
   storage_account_name       = azurerm_storage_account.table_storage_experiments.name
   storage_account_access_key = azurerm_storage_account.table_storage_experiments.primary_access_key
