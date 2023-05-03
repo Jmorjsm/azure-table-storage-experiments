@@ -31,7 +31,7 @@ variable "RESULTS_API_ZIP_DEPLOY_FILE" {
 
 resource "azurerm_resource_group" "table_storage_experiments" {
   name     = "table-storage-experiments"
-  location = "West US 2"
+  location = "West US"
 }
 
 resource "azurerm_storage_account" "table_storage_experiments" {
@@ -83,7 +83,7 @@ resource "azurerm_container_group" "table_storage_experiments" {
 resource "azurerm_service_plan" "results_service_plan" {
   name                = "results-service-plan"
   resource_group_name = azurerm_resource_group.table_storage_experiments.name
-  location            = "West US"
+  location            = azurerm_resource_group.table_storage_experiments.location
   os_type             = "Linux"
   sku_name            = "Y1"
 }
