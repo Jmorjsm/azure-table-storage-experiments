@@ -30,8 +30,8 @@ variable "RESULTS_API_ZIP_DEPLOY_FILE" {
 }
 
 resource "azurerm_resource_group" "table_storage_experiments" {
-  name     = "table-storage-experiments"
-  location = "West US"
+  name     = "table-storage-experiments-results"
+  location = "UK South"
 }
 
 resource "azurerm_storage_account" "table_storage_experiments" {
