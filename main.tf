@@ -65,7 +65,7 @@ resource "azurerm_container_group" "table_storage_experiments" {
       protocol = "UDP"
     }
     environment_variables = {
-      "TABLE_STORAGE_CONNECTION_STRING" = azurerm_storage_account.table_storage_experiments.primary_connection_string
+      "TABLE_STORAGE_CONNECTION_STRING" = azurerm_storage_account.table_storage_experiments_results.primary_connection_string
     }
   }
 
@@ -93,15 +93,15 @@ resource "azurerm_linux_function_app" "results_api_function_app" {
   resource_group_name = azurerm_resource_group.table_storage_experiments.name
   location            = azurerm_service_plan.results_service_plan.location
 
-  storage_account_name       = azurerm_storage_account.table_storage_experiments.name
-  storage_account_access_key = azurerm_storage_account.table_storage_experiments.primary_access_key
+  storage_account_name       = azurerm_storage_account.table_storage_experiments_results.name
+  storage_account_access_key = azurerm_storage_account.table_storage_experiments_results.primary_access_key
   service_plan_id            = azurerm_service_plan.results_service_plan.id
 
   zip_deploy_file = var.RESULTS_API_ZIP_DEPLOY_FILE
 
   app_settings = merge({
     WEBSITE_RUN_FROM_PACKAGE:  1,
-    STORAGE_CONNECTION: azurerm_storage_account.table_storage_experiments.primary_connection_string
+    STORAGE_CONNECTION: azurerm_storage_account.table_storage_experiments_results.primary_connection_string
   })
 
   site_config {
