@@ -35,7 +35,7 @@ resource "azurerm_resource_group" "table_storage_experiments" {
 }
 
 resource "azurerm_storage_account" "table_storage_experiments_results" {
-  name                     = "jmorjsmtse-results"
+  name                     = "jmorjsmtseresults"
   resource_group_name      = azurerm_resource_group.table_storage_experiments.name
   location                 = azurerm_resource_group.table_storage_experiments.location
   account_tier             = "Standard"
