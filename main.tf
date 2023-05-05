@@ -31,7 +31,7 @@ variable "RESULTS_API_ZIP_DEPLOY_FILE" {
 
 resource "azurerm_resource_group" "table_storage_experiments" {
   name     = "table-storage-experiments-results"
-  location = "UK South"
+  location = "West US"
 }
 
 resource "azurerm_storage_account" "table_storage_experiments" {
