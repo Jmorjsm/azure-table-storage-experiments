@@ -291,7 +291,10 @@ def result_to_entity(partition_name, result_row, headers):
         if(len(result_row) > i):
             e[header] = result_row[i]
 
-    e['RowKey'] = f'{e["function"]}_{e["partitionSize"]}_{e["partitionCount"]}'
+    function = e.get("function", "")
+    partitionSize = e.get("partitionSize", "")
+    partitionCount = e.get("partitionCount", "")
+    e['RowKey'] = f'{function}_{partitionSize}_{partitionCount}'
 
     return e
 
