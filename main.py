@@ -316,14 +316,14 @@ if __name__ == '__main__':
     print(f'results will be saved with partition key {partition_name}')
     tests = []
     results = []
-    #tests.append((run_test,(n_entities, property_shapes, basic_upsert)))
-    # tests.append((run_test,(n_entities, property_shapes, batch_upsert)))
+    tests.append((run_test,(n_entities, property_shapes, basic_upsert)))
+    tests.append((run_test,(n_entities, property_shapes, batch_upsert)))
     partition_counts = (100, 200, 500, 1000, 2000, 2500, 5000)
-    # for partition_count in partition_counts:
-    #     tests.append((run_test, (n_entities, property_shapes, batch_upsert_partitioned, 100, partition_count)))
-    #
-    # for partition_count in partition_counts:
-    #     tests.append((async_test, (run_test_async, (n_entities, property_shapes, batch_upsert_partitioned_async, 100, partition_count))))
+    for partition_count in partition_counts:
+        tests.append((run_test, (n_entities, property_shapes, batch_upsert_partitioned, 100, partition_count)))
+    
+    for partition_count in partition_counts:
+        tests.append((async_test, (run_test_async, (n_entities, property_shapes, batch_upsert_partitioned_async, 100, partition_count))))
 
     for partition_count in partition_counts:
         tests.append((run_test, (n_entities, property_shapes, batch_upsert_partitioned_parallel, 100, partition_count)))
