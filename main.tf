@@ -99,6 +99,10 @@ resource "azurerm_linux_function_app" "results_api_function_app" {
 
   zip_deploy_file = var.RESULTS_API_ZIP_DEPLOY_FILE
 
+  application_stack {
+    python_version = "3.10"
+  }
+
   app_settings = merge({
     WEBSITE_RUN_FROM_PACKAGE:  1,
     STORAGE_CONNECTION: azurerm_storage_account.table_storage_experiments_results.primary_connection_string
