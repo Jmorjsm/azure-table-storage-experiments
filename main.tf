@@ -107,9 +107,9 @@ resource "azurerm_linux_function_app" "results_api_function_app" {
   site_config {
     always_on         = false
     use_32_bit_worker = true
-  }
   
-  application_stack {
-    python_version = "3.10"
+    application_stack {
+      python_version = "3.10"
+    }
   }
 }
