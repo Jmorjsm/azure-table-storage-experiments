@@ -85,7 +85,7 @@ resource "azurerm_service_plan" "results_service_plan" {
   resource_group_name = azurerm_resource_group.table_storage_experiments.name
   location            = azurerm_resource_group.table_storage_experiments.location
   os_type             = "Linux"
-  sku_name            = "EP1"
+  sku_name            = "B1"
 }
 
 resource "azurerm_linux_function_app" "results_api_function_app" {
