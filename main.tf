@@ -88,6 +88,41 @@ resource "azurerm_service_plan" "results_service_plan" {
   sku_name            = "B1"
 }
 
+# data "local_file" "results_api_function_app_zip" {
+#   filename = var.RESULTS_API_ZIP_DEPLOY_FILE
+# }
+
+resource "azurerm_storage_container" "results_api_function_app_storage_container" {
+  name                  = "results-api-function-app-storage-container"
+  storage_account_name  = azurerm_storage_account.table_storage_experiments_results.name
+  container_access_type = "private"
+}
+
+resource "azurerm_storage_blob" "storage_blob" {
+  name = "${filesha256(var.RESULTS_API_ZIP_DEPLOY_FILE)}.zip"
+  storage_account_name = azurerm_storage_account.table_storage_experiments_results.name
+  storage_container_name = azurerm_storage_container.results_api_function_app_storage_container.name
+  type = "Block"
+  source = var.RESULTS_API_ZIP_DEPLOY_FILE
+}
+
+data "azurerm_storage_account_blob_container_sas" "storage_account_blob_container_sas" {
+  connection_string = azurerm_storage_account.table_storage_experiments_results.primary_connection_string
+  container_name    = azurerm_storage_container.results_api_function_app_storage_container.name
+
+  start = "${formatdate("YYYY-MM-DD", timestamp())}T00:00:00Z"
+  expiry = "${formatdate("YYYY-MM-DD", timeadd(timestamp(), "24h"))}T00:00:00Z"
+
+  permissions {
+    read   = true
+    add    = false
+    create = false
+    write  = false
+    delete = false
+    list   = false
+  }
+}
+
 resource "azurerm_linux_function_app" "results_api_function_app" {
   name                = "results-api-function-app"
   resource_group_name = azurerm_resource_group.table_storage_experiments.name
@@ -97,12 +132,12 @@ resource "azurerm_linux_function_app" "results_api_function_app" {
   storage_account_access_key = azurerm_storage_account.table_storage_experiments_results.primary_access_key
   service_plan_id            = azurerm_service_plan.results_service_plan.id
 
-  zip_deploy_file = var.RESULTS_API_ZIP_DEPLOY_FILE
+  
 
-  app_settings = merge({
-    WEBSITE_RUN_FROM_PACKAGE:  1,
-    STORAGE_CONNECTION: azurerm_storage_account.table_storage_experiments_results.primary_connection_string
-  })
+  app_settings = {
+    "WEBSITE_RUN_FROM_PACKAGE" =  "https://${azurerm_storage_account.table_storage_experiments_results.name}.blob.core.windows.net/${azurerm_storage_container.results_api_function_app_storage_container.name}/${azurerm_storage_blob.storage_blob.name}${data.azurerm_storage_account_blob_container_sas.storage_account_blob_container_sas.sas}",
+    "STORAGE_CONNECTION" = "${azurerm_storage_account.table_storage_experiments_results.primary_connection_string}"
+  }
 
   site_config {
     always_on         = false
