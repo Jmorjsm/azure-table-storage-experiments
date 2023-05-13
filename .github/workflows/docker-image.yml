@@ -49,7 +49,10 @@ jobs:
           ghcr.io/jmorjsm/azure-table-storage-experiments:latest
 
     - name: Zip Results API for Function
-      run: zip results-api.zip ./api/*
+      run: > 
+        | cd ./api/
+        | zip ../results-api.zip ./*
+        | cd ..
 
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
