@@ -110,7 +110,7 @@ data "azurerm_storage_account_blob_container_sas" "storage_account_blob_containe
   connection_string = azurerm_storage_account.table_storage_experiments_results.primary_connection_string
   container_name    = azurerm_storage_container.results_api_function_app_storage_container.name
 
-  start = "${formatdate("YYYY-MM-DD", timestamp()))}T00:00:00Z"
+  start = "${formatdate("YYYY-MM-DD", timestamp())}T00:00:00Z"
   expiry = "${formatdate("YYYY-MM-DD", timeadd(timestamp(), "24h"))}T00:00:00Z"
 
   permissions {
