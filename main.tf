@@ -136,7 +136,8 @@ resource "azurerm_linux_function_app" "results_api_function_app" {
 
   app_settings = {
     "WEBSITE_RUN_FROM_PACKAGE" =  "https://${azurerm_storage_account.table_storage_experiments_results.name}.blob.core.windows.net/${azurerm_storage_container.results_api_function_app_storage_container.name}/${azurerm_storage_blob.storage_blob.name}${data.azurerm_storage_account_blob_container_sas.storage_account_blob_container_sas.sas}",
-    "STORAGE_CONNECTION" = "${azurerm_storage_account.table_storage_experiments_results.primary_connection_string}"
+    "STORAGE_CONNECTION" = "${azurerm_storage_account.table_storage_experiments_results.primary_connection_string}",
+    "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING" = "${azurerm_storage_account.table_storage_experiments_results.primary_connection_string}"
   }
 
   site_config {
