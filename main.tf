@@ -127,7 +127,7 @@ resource "azurerm_application_insights" "test" {
   name                = "results-api-insights"
   location            = azurerm_resource_group.table_storage_experiments.location
   resource_group_name = azurerm_resource_group.table_storage_experiments.name
-  application_type    = "Web"
+  application_type    = "web"
 }
 
 resource "azurerm_linux_function_app" "results_api_function_app" {
