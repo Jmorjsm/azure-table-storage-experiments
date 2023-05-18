@@ -123,7 +123,7 @@ data "azurerm_storage_account_blob_container_sas" "storage_account_blob_containe
   }
 }
 
-resource "azurerm_application_insights" "test" {
+resource "azurerm_application_insights" "results_api_insights" {
   name                = "results-api-insights"
   location            = azurerm_resource_group.table_storage_experiments.location
   resource_group_name = azurerm_resource_group.table_storage_experiments.name
@@ -146,7 +146,7 @@ resource "azurerm_linux_function_app" "results_api_function_app" {
     "STORAGE_CONNECTION" = "${azurerm_storage_account.table_storage_experiments_results.primary_connection_string}",
     "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING" = "${azurerm_storage_account.table_storage_experiments_results.primary_connection_string}",
     "WEBSITE_CONTENTSHARE" = "${azurerm_storage_container.results_api_function_app_storage_container.name}",
-    "APPINSIGHTS_INSTRUMENTATIONKEY" = "${azurerm_application_insights.results_api_function_app.instrumentation_key}"
+    "APPINSIGHTS_INSTRUMENTATIONKEY" = "${azurerm_application_insights.results_api_insights.instrumentation_key}"
   }
 
   site_config {
